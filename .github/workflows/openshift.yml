@@ -1,0 +1,15 @@
+name: Openshift/Openshift
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on:
+      - self-hosted
+      - ubaidagent
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4.1.0
+#     # This item has no matching transformer
+#     - task: TerraformInstaller@1
+#       inputs:
+#         terraformVersion: 1.5.0
