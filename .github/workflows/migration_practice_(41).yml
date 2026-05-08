@@ -1,0 +1,38 @@
+name: migration_practice/migration_practice_(41)
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
+env:
+  AZURE_SUBSCRIPTION: YourAzureServiceConnection
+  ApiKey: my-api-key-123
+  DOCKER_USERNAME: fatimamustafaoo
+  DbPassword: UPDATE ME
+  FlaskSecretKey: my-secret-key-123
+  IMAGE_NAME: my-test-app
+  IMAGE_TAG: "${{ github.run_id }}"
+  KEY_VAULT_NAME: your-keyvault-name
+  RESOURCE_GROUP: your-resource-group
+  SQL_DATABASE: your-database-name
+  SQL_SERVER: your-sqlserver.database.windows.net
+  WEB_APP_NAME: your-web-app-name
+jobs:
+  BuildJob:
+    name: Install & Test App
+    runs-on:
+      - self-hosted
+      - Azure Pipelines
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4.1.0
+    - uses: actions/checkout@v4.1.0
+    - name: Login, Build and Push to Docker Hub
+      env:
+        DOCKER_USERNAME: "${{ env.DOCKER_USERNAME }}"
+        DOCKER_TOKEN: "${{ secrets.DOCKER_TOKEN }}"
+        IMAGE_NAME: "${{ env.IMAGE_NAME }}"
+        IMAGE_TAG: "${{ env.IMAGE_TAG }}"
+      run: "# Login\ndocker login \\\n  --username \"$DOCKER_USERNAME\" \\\n  --password \"$DOCKER_TOKEN\"\n\n# Build\ndocker build \\\n  -t $DOCKER_USERNAME/$IMAGE_NAME:$IMAGE_TAG \\\n  -t $DOCKER_USERNAME/$IMAGE_NAME:latest \\\n  .\n\n# Push\ndocker push $DOCKER_USERNAME/$IMAGE_NAME:$IMAGE_TAG\ndocker push $DOCKER_USERNAME/$IMAGE_NAME:latest\n\n# Done\necho \"✅ Image pushed successfully!\"\necho \"\U0001F4E6 $DOCKER_USERNAME/$IMAGE_NAME:$IMAGE_TAG\"\necho \"\U0001F517 https://hub.docker.com/r/$DOCKER_USERNAME/$IMAGE_NAME\""
