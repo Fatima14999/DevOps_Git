@@ -24,7 +24,6 @@ jobs:
   BuildJob:
     name: Install & Test App
     runs-on:
-      - self-hosted
       - ubunt_latest
     steps:
     - name: checkout
