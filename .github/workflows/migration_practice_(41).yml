@@ -11,7 +11,6 @@ env:
   ApiKey: my-api-key-123
   DOCKER_TOKEN: "${{ secrets.DOCKER_TOKEN }}"
   DOCKER_USERNAME: DOCKER_USERNAME
-  DbPassword: UPDATE ME
   FlaskSecretKey: my-secret-key-123
   IMAGE_NAME: my-test-app
   IMAGE_TAG: "${{ github.run_id }}"
