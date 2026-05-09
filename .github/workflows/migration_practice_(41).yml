@@ -23,9 +23,7 @@ env:
 jobs:
   BuildJob:
     name: Install & Test App
-    runs-on:
-      - self-hosted
-      - Azure Pipelines
+    runs-on: ubunt_latest
     steps:
     - name: checkout
       uses: actions/checkout@v4.1.0
