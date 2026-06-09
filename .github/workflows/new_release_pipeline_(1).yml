@@ -1,0 +1,75 @@
+name: Openshift/New_release_pipeline_(1)
+on:
+#   # The 'artifactSource' resource was not converted because GitHub does not support this type of trigger
+jobs:
+  Stage-1:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: "${{ github.ref }}"
+      cancel-in-progress: false
+    env:
+      IMAGE_REPO: ubaidullah334/myapp
+      OCP_PROJECT: ubaidullah-tahir-dev
+      OCP_SERVER: https://api.rm3.7wse.p1.openshiftapps.com:6443
+      OCP_TOKEN: sha256~o4O2fjmIl7V6Ns8mQ_8bHXJ8y6LhSigWj--HyyFOxgQ
+    if: github.event_type != 'pull_request'
+    steps:
+    - name: Bash Script
+      run: |-
+        set -e  # Stop script on any error
+        echo "================= DEBUG INFO ================="
+        echo "OCP_SERVER  = $OCP_SERVER"
+        echo "OCP_PROJECT = $OCP_PROJECT"
+        echo "IMAGE_REPO  = $IMAGE_REPO"
+        echo "OCP_TOKEN is set (masked)"
+        echo ""
+        echo "================= Logging into OpenShift ================="
+        oc login "$OCP_SERVER" \
+          --token="$OCP_TOKEN" \
+          --insecure-skip-tls-verify=true
+        echo "Switching to project: $OCP_PROJECT"
+        oc project "$OCP_PROJECT"
+        echo ""
+        echo "================= Reading image tag from artifact ================="
+        ARTIFACT_PATH=$(find "${{ github.workspace }}" -name "image.txt" | head -n 1)
+        if [ -z "$ARTIFACT_PATH" ]; then
+          echo "ERROR: image.txt not found!"
+          exit 1
+        fi
+        echo "Found artifact file: $ARTIFACT_PATH"
+        FULL_IMAGE=$(cat "$ARTIFACT_PATH")
+        IMAGE_TAG="${FULL_IMAGE##*:}"
+        echo "Using Image: $IMAGE_REPO:$IMAGE_TAG"
+        echo ""
+        echo "================= Finding OpenShift Manifests ================="
+        SOURCE_MANIFESTS=$(find "${{ github.workspace }}" -type d -name "openshift-manifests" | head -n 1)
+        if [ ! -d "$SOURCE_MANIFESTS" ]; then
+            echo "ERROR: OpenShift manifest folder not found!"
+            exit 1
+        fi
+        echo "Manifests found in: $SOURCE_MANIFESTS"
+        MANIFESTS_DIR="${{ github.workspace }}/manifests"
+        mkdir -p "$MANIFESTS_DIR"
+        cp -r "$SOURCE_MANIFESTS"/* "$MANIFESTS_DIR/"
+        echo ""
+        echo "================= Updating Deployment image ================="
+        DEPLOY_FILE="$MANIFESTS_DIR/deployment.yaml"
+        if [ ! -f "$DEPLOY_FILE" ]; then
+            echo "ERROR: deployment.yaml not found!"
+            exit 1
+        fi
+        sed -i "s|image: .*|image: $IMAGE_REPO:$IMAGE_TAG|g" "$DEPLOY_FILE"
+        echo "Updated deployment.yaml:"
+        grep "image:" "$DEPLOY_FILE"
+        echo ""
+        echo "================= Applying Manifests ================="
+        oc apply -f "$MANIFESTS_DIR/" --recursive
+        echo ""
+        echo "================= Rollout Status ================="
+        oc rollout status deployment/myapp --timeout=120s
+        echo ""
+        echo "================= Pods ================="
+        oc get pods -n "$OCP_PROJECT"
+        echo ""
+        echo "========= Deployment Finished Successfully ========="
+      shell: bash
